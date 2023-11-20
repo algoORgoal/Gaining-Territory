@@ -25,7 +25,35 @@ class MACHINE():
         self.triangles = [] # [(a, b), (c, d), (e, f)]
 
     def find_best_selection(self):
-        available = [[point1, point2] for (point1, point2) in list(combinations(self.whole_points, 2)) if self.check_availability([point1, point2])]
+
+        # count how many times each point has been used to draw lines so far
+        points_to_line_count = { point: 0 for point in self.whole_points}
+        for (point1, point2) in self.drawn_lines:
+            points_to_line_count[point1] += 1
+            points_to_line_count[point2] += 1
+
+        # reverse the key-value relation
+        line_count_to_points = { 0: [], 1: [], 2: [] }
+        for point in points_to_line_count:
+            line_count_to_points[points_to_line_count[point]].append(point)
+        
+        # extract points that have not been used to draw any line yet
+        points_not_drawn = line_count_to_points[0]
+        points_drawn_once = line_count_to_points[1]
+
+
+        # select 2 points which sastify the rules ramdomly 
+        if len(points_drawn_once) >= 2:
+            self.drawn_lines
+            available = [[point1, point2] for (point1, point2) in list(combinations(points_not_drawn, 2)) if self.check_availability([point1, point2])]            
+        elif len(points_not_drawn) >= 2:
+            available = [[point1, point2] for (point1, point2) in list(combinations(points_not_drawn, 2)) if self.check_availability([point1, point2])]
+
+        if len(available) == 0:
+            available = [[point1, point2] for (point1, point2) in list(combinations(self.whole_points, 2)) if self.check_availability([point1, point2])]
+
+
+    
         return random.choice(available)
     
     def check_availability(self, line):
