@@ -27,34 +27,77 @@ class MACHINE():
     def find_best_selection(self):
 
         # count how many times each point has been used to draw lines so far
-        points_to_line_count = { point: 0 for point in self.whole_points}
+        points_to_drawn_times = { point: 0 for point in self.whole_points}
+        graph = { point: [] for point in self.whole_points }
         for (point1, point2) in self.drawn_lines:
-            points_to_line_count[point1] += 1
-            points_to_line_count[point2] += 1
+            points_to_drawn_times[point1] += 1
+            points_to_drawn_times[point2] += 1
+            graph[point1].append((point1, point2))
+            graph[point2].append((point1, point2))
 
         # reverse the key-value relation
-        line_count_to_points = { 0: [], 1: [], 2: [] }
-        for point in points_to_line_count:
-            line_count_to_points[points_to_line_count[point]].append(point)
+        drawn_times_to_points = { points_to_drawn_times[point]: [] for point in points_to_drawn_times }
+        for point in points_to_drawn_times:
+            drawn_times_to_points[points_to_drawn_times[point]].append(point)
         
         # extract points that have not been used to draw any line yet
-        points_not_drawn = line_count_to_points[0]
-        points_drawn_once = line_count_to_points[1]
+        points_not_drawn = drawn_times_to_points[0]
 
+        print(graph)
 
-        # select 2 points which sastify the rules ramdomly 
-        if len(points_drawn_once) >= 2:
-            self.drawn_lines
-            available = [[point1, point2] for (point1, point2) in list(combinations(points_not_drawn, 2)) if self.check_availability([point1, point2])]            
-        elif len(points_not_drawn) >= 2:
-            available = [[point1, point2] for (point1, point2) in list(combinations(points_not_drawn, 2)) if self.check_availability([point1, point2])]
+        print(drawn_times_to_points)
 
+        # draw traingle if possible
+        count_maximum_drawn__times = max(list(drawn_times_to_points.keys()))
+
+        print(count_maximum_drawn__times)
+
+        available = []
+
+        
+        
+                
+
+        for drawn_times in range(count_maximum_drawn__times, 1, -1):
+            points = drawn_times_to_points[drawn_times]
+            print(points)
+            for point in points:
+                lines = graph[point]
+                print(lines)
+                for [(point1, point2), (point3 ,point4)] in list(combinations(lines, 2)):
+                    print([(point1, point2), (point3 ,point4)])
+                    if point1[0] == point3[0] and point1[1] == point3[1]:
+                        if self.check_availability([point2, point4]):
+                            available.append([point2, point4])
+                    elif point1[0] == point4[0] and point1[1] == point4[1]:
+                        if self.check_availability([point2, point3]):
+                            available.append([point2, point3])
+                    elif point2[0] == point3[0] and point2[1] == point3[1]:
+                        if self.check_availability([point1, point4]):
+                            available.append([point1, point4])
+                    else: # point 2 == point4
+                        if self.check_availability([point1, point3]):
+                            available.append([point1, point3])
+                    print(available)
+        
+        if len(available) != 0:
+            return random.choice(available)
+
+        # select 2 points that hasn't been used to draw a line
+        if len(points_not_drawn) >= 2:
+            available = self.find_available(points_not_drawn)
+            return random.choice(available)
+
+        # pick among all the possible cases
         if len(available) == 0:
-            available = [[point1, point2] for (point1, point2) in list(combinations(self.whole_points, 2)) if self.check_availability([point1, point2])]
+            available = self.find_available(self.whole_points)
 
 
     
         return random.choice(available)
+    
+    def find_available(self, points):
+        return [[point1, point2] for (point1, point2) in list(combinations(points, 2)) if self.check_availability([point1, point2])]
     
     def check_availability(self, line):
         line_string = LineString(line)
