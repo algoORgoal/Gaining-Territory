@@ -1,6 +1,7 @@
 import random
-from itertools import combinations
-from shapely.geometry import LineString, Point
+from itertools import chain, combinations
+from shapely.geometry import LineString, Point, Polygon
+
 
 class MACHINE():
     """
@@ -28,7 +29,10 @@ class MACHINE():
 
         # count how many times each point has been used to draw lines so far
         points_to_drawn_times = { point: 0 for point in self.whole_points}
+
+        # see the list of connected points to each point
         graph = { point: [] for point in self.whole_points }
+        
         for (point1, point2) in self.drawn_lines:
             points_to_drawn_times[point1] += 1
             points_to_drawn_times[point2] += 1
@@ -40,9 +44,6 @@ class MACHINE():
         for point in points_to_drawn_times:
             drawn_times_to_points[points_to_drawn_times[point]].append(point)
         
-        # extract points that have not been used to draw any line yet
-        points_not_drawn = drawn_times_to_points[0]
-
         print(graph)
 
         print(drawn_times_to_points)
@@ -54,50 +55,74 @@ class MACHINE():
 
         available = []
 
-        
-        
+        for drawn_times in range(count_maximum_drawn__times - 1, 1, -1):
+            if drawn_times in drawn_times_to_points:
+                points = drawn_times_to_points[drawn_times]
+                print(points)
+                for point in points:
+                    lines = graph[point]
+                    print(lines)
+                    available = self.find_best_triangle_lines(lines)
                 
-
-        for drawn_times in range(count_maximum_drawn__times, 1, -1):
-            points = drawn_times_to_points[drawn_times]
-            print(points)
-            for point in points:
-                lines = graph[point]
-                print(lines)
-                for [(point1, point2), (point3 ,point4)] in list(combinations(lines, 2)):
-                    print([(point1, point2), (point3 ,point4)])
-                    if point1[0] == point3[0] and point1[1] == point3[1]:
-                        if self.check_availability([point2, point4]):
-                            available.append([point2, point4])
-                    elif point1[0] == point4[0] and point1[1] == point4[1]:
-                        if self.check_availability([point2, point3]):
-                            available.append([point2, point3])
-                    elif point2[0] == point3[0] and point2[1] == point3[1]:
-                        if self.check_availability([point1, point4]):
-                            available.append([point1, point4])
-                    else: # point 2 == point4
-                        if self.check_availability([point1, point3]):
-                            available.append([point1, point3])
-                    print(available)
-        
-        if len(available) != 0:
+        if len(available) > 0:
             return random.choice(available)
+
+        # extract points that have not been used to draw any line yet
+        points_not_drawn = drawn_times_to_points[0]
 
         # select 2 points that hasn't been used to draw a line
         if len(points_not_drawn) >= 2:
             available = self.find_available(points_not_drawn)
-            return random.choice(available)
 
         # pick among all the possible cases
         if len(available) == 0:
             available = self.find_available(self.whole_points)
 
-
-    
         return random.choice(available)
     
     def find_available(self, points):
         return [[point1, point2] for (point1, point2) in list(combinations(points, 2)) if self.check_availability([point1, point2])]
+    
+    # todo: draw some line when user tries to fill the entire inner lines
+    def find_best_triangle_lines(self, lines):
+        triangle_lines = []
+        for [(point1, point2), (point3 ,point4)] in list(combinations(lines, 2)):
+            print([(point1, point2), (point3 ,point4)])
+            if point1[0] == point3[0] and point1[1] == point3[1]:
+                if self.check_availability([point2, point4]):
+                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point2, point4)]) % 2 == 0:
+                        triangle_lines.append([point2, point4])
+            elif point1[0] == point4[0] and point1[1] == point4[1]:
+                if self.check_availability([point2, point3]):
+                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point2, point3)]) % 2 == 0:
+                        triangle_lines.append([point2, point3])
+            elif point2[0] == point3[0] and point2[1] == point3[1]:
+                if self.check_availability([point1, point4]):
+                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point1, point4)]) % 2 == 0:
+                        triangle_lines.append([point1, point4])
+            else: # point 2 == point4
+                if self.check_availability([point1, point3]):
+                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point1, point3)]) % 2 == 0:
+                        triangle_lines.append([point1, point3])
+        print(triangle_lines)
+        return triangle_lines
+    
+    
+        
+    def count_points_inside_triangle(self, lines):
+        triangle = self.organize_points(list(set(chain(*[lines[0], lines[1], lines[2]]))))
+        count_points = 0
+        for point in self.whole_points:
+            if point in triangle:
+                continue
+            if bool(Polygon(triangle).intersection(Point(point))):
+                count_points += 1
+        return count_points
+    
+    # Organization Functions
+    def organize_points(self, point_list):
+        point_list.sort(key=lambda x: (x[0], x[1]))
+        return point_list
     
     def check_availability(self, line):
         line_string = LineString(line)
