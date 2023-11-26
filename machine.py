@@ -120,20 +120,23 @@ class MACHINE():
         print("triangle_lines")
         print(triangle_lines)
         return triangle_lines
-    
-    
         
-    def count_points_inside_triangle(self, lines):
+    def count_points_inside_triangle(self, lines: list):
         triangle = self.organize_points(list(set(chain(*[lines[0], lines[1], lines[2]]))))
         count_points = 0
         for point in self.whole_points:
             if point in triangle:
                 continue
-            if bool(Polygon(triangle).intersection(Point(point))):
+            if self.is_point_inside_triangle(point, lines):
                 count_points += 1
         print("number of points inside triangle")
         print(count_points)
         return count_points
+    
+    def is_point_inside_triangle(self, point: list, lines: list) -> bool:
+        triangle = self.organize_points(list(set(chain(*[lines[0], lines[1], lines[2]]))))
+        return bool(Polygon(triangle).intersection(Point(point)))
+    
     
     # Organization Functions
     def organize_points(self, point_list):
