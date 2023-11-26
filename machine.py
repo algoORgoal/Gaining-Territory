@@ -32,7 +32,7 @@ class MACHINE():
 
         # see the list of connected points to each point
         graph = { point: [] for point in self.whole_points }
-        
+
         for (point1, point2) in self.drawn_lines:
             points_to_drawn_times[point1] += 1
             points_to_drawn_times[point2] += 1
@@ -55,7 +55,7 @@ class MACHINE():
 
         available = []
 
-        for drawn_times in range(count_maximum_drawn__times - 1, 1, -1):
+        for drawn_times in range(count_maximum_drawn__times, 1, -1):
             if drawn_times in drawn_times_to_points:
                 points = drawn_times_to_points[drawn_times]
                 print(points)
