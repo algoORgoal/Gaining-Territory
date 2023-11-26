@@ -26,7 +26,7 @@ class MACHINE():
         self.triangles = [] # [(a, b), (c, d), (e, f)]
 
     def find_best_selection(self):
-
+        print("selection begins")
         # count how many times each point has been used to draw lines so far
         points_to_drawn_times = { point: 0 for point in self.whole_points}
 
@@ -44,27 +44,36 @@ class MACHINE():
         for point in points_to_drawn_times:
             drawn_times_to_points[points_to_drawn_times[point]].append(point)
         
-        print(graph)
-
-        print(drawn_times_to_points)
-
+       
+        print()
         # draw traingle if possible
         count_maximum_drawn__times = max(list(drawn_times_to_points.keys()))
 
+        
+        print("count_maximum_drawn__times")
         print(count_maximum_drawn__times)
 
         available = []
 
         for drawn_times in range(count_maximum_drawn__times, 1, -1):
             if drawn_times in drawn_times_to_points:
+                print("drawn_times_to_points")
+                print(drawn_times_to_points)
+                print("drawn times")
+                print(drawn_times)
                 points = drawn_times_to_points[drawn_times]
-                print(points)
                 for point in points:
                     lines = graph[point]
                     print(lines)
                     available = self.find_best_triangle_lines(lines)
-                
+                    print("available")
+                    print(available)
+                    print(len(available))
+                    if len(available) > 0:
+                        return random.choice(available)
+
         if len(available) > 0:
+            print("draw a traingle")
             return random.choice(available)
 
         # extract points that have not been used to draw any line yet
@@ -72,12 +81,14 @@ class MACHINE():
 
         # select 2 points that hasn't been used to draw a line
         if len(points_not_drawn) >= 2:
+            print("draw using unused points")
             available = self.find_available(points_not_drawn)
 
         # pick among all the possible cases
         if len(available) == 0:
             available = self.find_available(self.whole_points)
 
+        print("selection ends")
         return random.choice(available)
     
     def find_available(self, points):
@@ -85,6 +96,8 @@ class MACHINE():
     
     # todo: draw some line when user tries to fill the entire inner lines
     def find_best_triangle_lines(self, lines):
+        print("lines")
+        print(lines)
         triangle_lines = []
         for [(point1, point2), (point3 ,point4)] in list(combinations(lines, 2)):
             print([(point1, point2), (point3 ,point4)])
@@ -104,6 +117,7 @@ class MACHINE():
                 if self.check_availability([point1, point3]):
                     if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point1, point3)]) % 2 == 0:
                         triangle_lines.append([point1, point3])
+        print("triangle_lines")
         print(triangle_lines)
         return triangle_lines
     
@@ -117,6 +131,8 @@ class MACHINE():
                 continue
             if bool(Polygon(triangle).intersection(Point(point))):
                 count_points += 1
+        print("number of points inside triangle")
+        print(count_points)
         return count_points
     
     # Organization Functions
