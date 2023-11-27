@@ -45,30 +45,21 @@ class MACHINE():
             drawn_times_to_points[points_to_drawn_times[point]].append(point)
         
        
-        print()
         # draw traingle if possible
         count_maximum_drawn__times = max(list(drawn_times_to_points.keys()))
 
-        
-        print("count_maximum_drawn__times")
-        print(count_maximum_drawn__times)
-
         available = []
+        
+        available = self.find_lines_generating_two_triangles(graph)
+        if len(available) > 0:
+            return random.choice(available)        
 
         for drawn_times in range(count_maximum_drawn__times, 1, -1):
             if drawn_times in drawn_times_to_points:
-                print("drawn_times_to_points")
-                print(drawn_times_to_points)
-                print("drawn times")
-                print(drawn_times)
                 points = drawn_times_to_points[drawn_times]
                 for point in points:
                     lines = graph[point]
-                    print(lines)
-                    available = self.find_best_triangle_lines(lines)
-                    print("available")
-                    print(available)
-                    print(len(available))
+                    available = self.find_best_triangle_lines(lines, graph)
                     if len(available) > 0:
                         return random.choice(available)
 
@@ -88,34 +79,33 @@ class MACHINE():
         if len(available) == 0:
             available = self.find_available(self.whole_points)
 
-        print("selection ends")
         return random.choice(available)
     
     def find_available(self, points):
         return [[point1, point2] for (point1, point2) in list(combinations(points, 2)) if self.check_availability([point1, point2])]
     
     # todo: draw some line when user tries to fill the entire inner lines
-    def find_best_triangle_lines(self, lines):
+    def find_best_triangle_lines(self, lines, graph):
         print("lines")
         print(lines)
         triangle_lines = []
         for [(point1, point2), (point3 ,point4)] in list(combinations(lines, 2)):
             print([(point1, point2), (point3 ,point4)])
-            if point1[0] == point3[0] and point1[1] == point3[1]:
+            if self.are_points_same(point1, point3):
                 if self.check_availability([point2, point4]):
-                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point2, point4)]) % 2 == 0:
+                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point2, point4)]) == 0 and len(self.find_lines_connecting_two_triangles([point1, point2, point4], graph)) == 0:
                         triangle_lines.append([point2, point4])
-            elif point1[0] == point4[0] and point1[1] == point4[1]:
+            elif self.are_points_same(point1, point4):
                 if self.check_availability([point2, point3]):
-                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point2, point3)]) % 2 == 0:
+                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point2, point3)]) == 0 and len(self.find_lines_connecting_two_triangles([point1, point2, point3], graph)) == 0:
                         triangle_lines.append([point2, point3])
-            elif point2[0] == point3[0] and point2[1] == point3[1]:
+            elif self.are_points_same(point2, point3):
                 if self.check_availability([point1, point4]):
-                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point1, point4)]) % 2 == 0:
+                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point1, point4)]) == 0 and len(self.find_lines_connecting_two_triangles([point1, point2, point4], graph)) == 0:
                         triangle_lines.append([point1, point4])
             else: # point 2 == point4
                 if self.check_availability([point1, point3]):
-                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point1, point3)]) % 2 == 0:
+                    if self.count_points_inside_triangle([(point1, point2), (point3, point4), (point1, point3)]) == 0 and len(self.find_lines_connecting_two_triangles([point1, point2, point3], graph)) == 0:
                         triangle_lines.append([point1, point3])
         print("triangle_lines")
         print(triangle_lines)
@@ -136,6 +126,89 @@ class MACHINE():
     def is_point_inside_triangle(self, point: list, lines: list) -> bool:
         triangle = self.organize_points(list(set(chain(*[lines[0], lines[1], lines[2]]))))
         return bool(Polygon(triangle).intersection(Point(point)))
+    
+    def is_vertex_of_triangle(self, point: list, triangle: list) -> bool:
+        return point in triangle
+    
+    def are_two_vertices_same(self, triangle1, triangle2):
+        count_same_vertices = 0
+        for point1 in triangle1:
+            for point2 in triangle2:
+                if point1[0] == point2[0] and point1[1] == point2[1]:
+                    count_same_vertices += 1
+
+        return count_same_vertices == 2
+    
+    def find_different_vertices(self, triangle1, triangle2):
+        different_vertices = []
+        points = triangle1 + triangle2
+        for point in points:
+            if point not in triangle1 or point not in triangle2:
+                different_vertices.append(point)
+        return different_vertices
+        
+    def find_lines_generating_two_triangles(self, graph):
+        #find a line when the two triangles have the same two 
+        triangle_lines = []
+        for triangle in self.triangles:
+            triangle_lines = triangle_lines + self.find_lines_connecting_two_triangles(triangle, graph)
+        if len(triangle_lines) == 0:
+            triangle_lines = self.find_lines_with_point_on_line()
+        
+        return triangle_lines
+        
+        
+                        
+
+        
+
+    def find_lines_connecting_two_triangles(self, triangle, graph):
+        triangle_lines = []
+        
+        print(triangle)
+        for [vertex_in_triangle1, vertex_in_triangle2] in list(combinations(triangle, 2)):
+            lines1 = graph[vertex_in_triangle1]
+            lines2 = graph[vertex_in_triangle2]
+            for [point1, point2] in lines1:
+                for [point3, point4]  in lines2:
+                    print("point1, point2 point3 point4")
+                    print(point1, point2, point3, point4)
+                    if self.are_points_same(point1, point3) and point1 not in triangle:
+                        [vertex] = [vertex for vertex in triangle  if vertex not in [point1, point2, point3, point4]]
+                        if self.check_availability([vertex, point1]):
+                            triangle_lines.append([vertex, point1])
+                    elif self.are_points_same(point1, point4) and point1 not in triangle:
+                        [vertex] = [vertex for vertex in triangle  if vertex not in [point1, point2, point3, point4]]
+                        if self.check_availability([vertex, point1]):
+                            triangle_lines.append([vertex, point1])
+                    elif self.are_points_same(point2, point3) and point2 not in triangle:
+                        [vertex] = [vertex for vertex in triangle  if vertex not in [point1, point2, point3, point4]]
+                        if self.check_availability([vertex, point2]):
+                            triangle_lines.append([vertex, point2])
+                    elif self.are_points_same(point2, point4) and point2 not in triangle:
+                        [vertex] = [vertex for vertex in triangle  if vertex not in [point1, point2, point3, point4]]
+                        if self.check_availability([vertex, point2]):
+                            triangle_lines.append([vertex, point2])
+        return triangle_lines
+    
+    def find_lines_with_point_on_line(self):
+        triangle_lines = []
+        # find a line when a point is in the middle of line
+        for point in self.whole_points:
+            for triangle in self.triangles:
+                for line in list(combinations(triangle, 2)):
+                    if self.is_point_on_line(point, line):
+                        [left_vertex] = [vertex for vertex in triangle if vertex not in line]
+                        if self.check_availability([point, left_vertex]):
+                            triangle_lines.append([point, left_vertex])
+        
+        return triangle_lines
+
+    def is_point_on_line(self, point, line):
+        bool(LineString(line).intersects(Point(point)))
+
+    def are_points_same(self, point1, point2):
+        return point1[0] == point2[0] and point1[1] == point2[1]
     
     
     # Organization Functions
