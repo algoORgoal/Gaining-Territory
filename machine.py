@@ -68,7 +68,7 @@ class MACHINE():
             return random.choice(available)
 
         # extract points that have not been used to draw any line yet
-        points_not_drawn = drawn_times_to_points[0]
+        points_not_drawn = drawn_times_to_points[0] if 0 in drawn_times_to_points else []
 
         # select 2 points that hasn't been used to draw a line
         if len(points_not_drawn) >= 2:
