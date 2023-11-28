@@ -59,9 +59,10 @@ class MACHINE():
                 points = drawn_times_to_points[drawn_times]
                 for point in points:
                     lines = graph[point]
-                    available = self.find_best_triangle_lines(lines, graph)
-                    if len(available) > 0:
-                        return random.choice(available)
+                    available = available + self.find_best_triangle_lines(lines, graph)
+        
+        
+
 
         if len(available) > 0:
             print("draw a traingle")
@@ -74,6 +75,15 @@ class MACHINE():
         if len(points_not_drawn) >= 2:
             print("draw using unused points")
             available = self.find_available(points_not_drawn)
+        
+        # draw lines unfavorable to opponent
+        lines_unfavorable_to_opponent = []
+        for line in available:
+            if not self.can_make_triangle(line, graph):
+                lines_unfavorable_to_opponent = lines_unfavorable_to_opponent + [line]
+        
+        if len(lines_unfavorable_to_opponent) > 0:
+            return random.choice(lines_unfavorable_to_opponent)
 
         # pick among all the possible cases
         if len(available) == 0:
@@ -157,9 +167,32 @@ class MACHINE():
         
         return triangle_lines
         
-        
-                        
+    def can_make_triangle(self, new_line, graph):
+        [point1, point2] = new_line
 
+        lines_of_point1 = graph[point1]
+    
+        for [previous_point1, previous_point2] in lines_of_point1:
+            if self.are_points_same(point1, previous_point1) and not self.are_points_same(point2, previous_point2):
+                if self.check_availability([point2, previous_point2]):
+                    return True
+            elif self.are_points_same(point1, previous_point2) and not self.are_points_same(point2, previous_point1):
+                if self.check_availability([point2, previous_point1]):
+                    return True
+        
+        lines_of_point2 = graph[point2]
+    
+        for [previous_point1, previous_point2] in lines_of_point2:
+            if self.are_points_same(point2, previous_point1) and not self.are_points_same(point1, previous_point2):
+                if self.check_availability([point1, previous_point2]):
+                    return True
+            elif self.are_points_same(point2, previous_point2) and not self.are_points_same(point1, previous_point1):
+                if self.check_availability([point1, previous_point1]):
+                    return True
+        
+        return False
+        
+        
         
 
     def find_lines_connecting_two_triangles(self, triangle, graph):
